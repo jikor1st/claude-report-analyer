@@ -1,4 +1,3 @@
-import React from 'react';
 import { SessionReport } from '../lib/api';
 
 interface SessionListProps {

@@ -1,8 +1,8 @@
-import React from 'react';
 import { useLatestReport } from '../hooks/useReports';
 import { StatsCard } from '../components/StatsCard';
 import { SessionChart } from '../components/SessionChart';
 import { SessionList } from '../components/SessionList';
+import { ExportButtons } from '../components/ExportButtons';
 
 function Dashboard() {
   const { report, loading, error } = useLatestReport();
@@ -20,6 +20,12 @@ function Dashboard() {
 
   return (
     <div className="space-y-6">
+      {/* 헤더 및 내보내기 버튼 */}
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-gray-800">Claude 분석 대시보드</h1>
+        {report && <ExportButtons report={report} />}
+      </div>
+
       {/* 에러 메시지 */}
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">

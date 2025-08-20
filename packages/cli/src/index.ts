@@ -17,6 +17,7 @@ program
   .description('지정된 폴더의 JSONL 파일을 분석합니다')
   .argument('<path>', '분석할 폴더 경로')
   .option('-o, --output <path>', '결과 출력 경로', './claude-reports')
+  .option('-f, --format <format>', '출력 형식 (json, markdown, pdf, all)', 'all')
   .option('-v, --verbose', '자세한 로그 출력')
   .action(analyzeCommand);
 

@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   LineChart,
   Line,
@@ -39,7 +38,7 @@ export function SessionChart({ data, type, title }: SessionChartProps) {
         </div>
       ) : (
         <ResponsiveContainer width="100%" height={300}>
-          {type === 'line' && (
+          {type === 'line' ? (
             <LineChart data={data}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" />
@@ -54,9 +53,7 @@ export function SessionChart({ data, type, title }: SessionChartProps) {
                 name="세션 수"
               />
             </LineChart>
-          )}
-          
-          {type === 'bar' && (
+          ) : type === 'bar' ? (
             <BarChart data={data}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" />
@@ -65,9 +62,7 @@ export function SessionChart({ data, type, title }: SessionChartProps) {
               <Legend />
               <Bar dataKey="value" fill="#3B82F6" name="메시지 수" />
             </BarChart>
-          )}
-          
-          {type === 'pie' && (
+          ) : (
             <PieChart>
               <Pie
                 data={data}
@@ -79,7 +74,7 @@ export function SessionChart({ data, type, title }: SessionChartProps) {
                 fill="#8884d8"
                 dataKey="value"
               >
-                {data.map((entry, index) => (
+                {data.map((_entry, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>

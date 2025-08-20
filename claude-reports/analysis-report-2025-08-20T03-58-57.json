@@ -1,0 +1,44 @@
+{
+  "version": "1.0",
+  "analyzedAt": "2025-08-20T03:58:57.777Z",
+  "sourcePath": "/Users/herren/Desktop/jigiyeok/project/claude-report-analyer/test-data.jsonl",
+  "filesAnalyzed": 1,
+  "sessions": [
+    {
+      "id": "test-data.jsonl",
+      "sessionCount": 1,
+      "totalMessages": 6,
+      "userMessages": 3,
+      "assistantMessages": 3,
+      "codeBlocks": 3,
+      "topics": [
+        "can you help me create a react component ",
+        "can you add state management to it ",
+        "great  now can you help me with api integration "
+      ],
+      "dateRange": {
+        "start": "2024-01-20T10:00:00Z",
+        "end": "2024-01-20T10:05:00Z"
+      }
+    }
+  ],
+  "summary": {
+    "totalSessions": 1,
+    "totalMessages": 6,
+    "totalCodeBlocks": 3,
+    "dateRange": {
+      "start": "2024-01-20T10:00:00Z",
+      "end": "2024-01-20T10:05:00Z"
+    },
+    "topTopics": [
+      "can you help me create a react component ",
+      "can you add state management to it ",
+      "great  now can you help me with api integration "
+    ]
+  },
+  "metadata": {
+    "analyzerVersion": "0.1.0",
+    "platform": "darwin",
+    "nodeVersion": "v20.9.0"
+  }
+}

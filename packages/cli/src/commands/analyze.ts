@@ -6,11 +6,13 @@ import { promises as fsPromises } from 'fs';
 import { JSONLParser } from '../utils/jsonl-parser.js';
 import { SessionAnalyzer } from '../core/session-analyzer.js';
 import { ReportGenerator } from '../services/report-generator.js';
+import { PDFGenerator } from '../services/pdf-generator.js';
 import { AnalysisResult } from '../core/session-analyzer.js';
 
 interface AnalyzeOptions {
   output: string;
   verbose: boolean;
+  format?: 'json' | 'markdown' | 'pdf' | 'all';
 }
 
 export async function analyzeCommand(targetPath: string, options: AnalyzeOptions): Promise<void> {
@@ -73,11 +75,36 @@ export async function analyzeCommand(targetPath: string, options: AnalyzeOptions
     );
     
     // Markdown 요약 생성
-    const markdownPath = await reportGenerator.generateMarkdownSummary(reportPath);
+    const format = options.format || 'all';
+    let markdownPath: string | undefined;
+    let pdfPath: string | undefined;
+    
+    if (format === 'markdown' || format === 'all') {
+      markdownPath = await reportGenerator.generateMarkdownSummary(reportPath);
+    }
+    
+    if (format === 'pdf' || format === 'all') {
+      // Markdown 파일이 없으면 먼저 생성
+      if (!markdownPath) {
+        markdownPath = await reportGenerator.generateMarkdownSummary(reportPath);
+      }
+      const pdfGenerator = new PDFGenerator(outputDir);
+      pdfPath = await pdfGenerator.generatePDFFromMarkdown(markdownPath);
+    }
 
     console.log(chalk.green(`\\n\u2713 \ubd84\uc11d \uc644\ub8cc!`));
-    console.log(chalk.gray(`  JSON \ub9ac\ud3ec\ud2b8: ${reportPath}`));
-    console.log(chalk.gray(`  Markdown \uc694\uc57d: ${markdownPath}`));
+    
+    if (format === 'json' || format === 'all') {
+      console.log(chalk.gray(`  JSON \ub9ac\ud3ec\ud2b8: ${reportPath}`));
+    }
+    
+    if (markdownPath && (format === 'markdown' || format === 'all')) {
+      console.log(chalk.gray(`  Markdown \uc694\uc57d: ${markdownPath}`));
+    }
+    
+    if (pdfPath) {
+      console.log(chalk.gray(`  PDF \ubb38\uc11c: ${pdfPath}`));
+    }
 
   } catch (error) {
     spinner.fail(chalk.red(`\ubd84\uc11d \uc911 \uc624\ub958\uac00 \ubc1c\uc0dd\ud588\uc2b5\ub2c8\ub2e4: ${error}`));
