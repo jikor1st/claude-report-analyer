@@ -2,8 +2,12 @@ import { Router } from 'express';
 import { resultsRouter } from './results';
 import exportRouter from './export';
 import analyzeRouter from './analyze';
+import projectsRouter from './projects';
 
 export const router = Router();
+
+// Projects 엔드포인트 (주요 기능)
+router.use('/', projectsRouter);
 
 // Results 엔드포인트
 router.use('/results', resultsRouter);

@@ -3,6 +3,7 @@ import Dashboard from './pages/Dashboard';
 import Calendar from './pages/Calendar';
 import Reports from './pages/Reports';
 import ProjectAnalyzer from './pages/ProjectAnalyzer';
+import ProjectDashboard from './pages/ProjectDashboard';
 
 function App() {
   return (
@@ -17,6 +18,16 @@ function App() {
               <nav className="flex space-x-8">
                 <NavLink
                   to="/"
+                  className={({ isActive }) =>
+                    isActive
+                      ? 'text-primary-600 border-b-2 border-primary-600 py-4'
+                      : 'text-gray-600 hover:text-gray-900 py-4'
+                  }
+                >
+                  프로젝트 분석
+                </NavLink>
+                <NavLink
+                  to="/dashboard"
                   className={({ isActive }) =>
                     isActive
                       ? 'text-primary-600 border-b-2 border-primary-600 py-4'
@@ -62,7 +73,8 @@ function App() {
         
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <Routes>
-            <Route path="/" element={<Dashboard />} />
+            <Route path="/" element={<ProjectDashboard />} />
+            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/calendar" element={<Calendar />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/analyzer" element={<ProjectAnalyzer />} />
