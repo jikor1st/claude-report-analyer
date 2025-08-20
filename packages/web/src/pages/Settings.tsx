@@ -75,18 +75,22 @@ function Settings() {
         }),
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        setMessage(data.message);
-        await loadSettings();
-        setTimeout(() => setMessage(''), 5000);
-      } else {
-        setError(data.error || '설정 저장에 실패했습니다.');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: '알 수 없는 오류' }));
+        setError(errorData.error || '설정 저장에 실패했습니다.');
+        if (errorData.path) {
+          setError(`${errorData.error}\n경로: ${errorData.path}`);
+        }
+        return;
       }
-    } catch (err) {
-      setError('설정 저장 중 오류가 발생했습니다.');
-      console.error(err);
+
+      const data = await response.json();
+      setMessage(data.message || '설정이 저장되었습니다.');
+      await loadSettings();
+      setTimeout(() => setMessage(''), 5000);
+    } catch (err: any) {
+      setError(`설정 저장 중 오류가 발생했습니다: ${err.message || err}`);
+      console.error('설정 저장 오류:', err);
     } finally {
       setSaving(false);
     }
@@ -185,6 +189,14 @@ function Settings() {
               <p className="text-xs text-gray-500 mt-2">
                 Claude Code 프로젝트가 저장된 폴더 경로를 입력하세요. (~는 홈 디렉토리로 자동 변환됩니다)
               </p>
+              <div className="mt-3 p-3 bg-blue-50 rounded text-sm">
+                <p className="text-blue-800 font-medium mb-2">💡 Claude Code 프로젝트 경로 찾기:</p>
+                <ul className="text-blue-700 space-y-1 text-xs">
+                  <li>• macOS: ~/Library/Application Support/Claude/claude-code/projects</li>
+                  <li>• Linux: ~/.config/claude-code/projects</li>
+                  <li>• 또는 Claude Code 설정에서 확인 가능합니다</li>
+                </ul>
+              </div>
             </div>
 
             {/* 저장 버튼 */}
