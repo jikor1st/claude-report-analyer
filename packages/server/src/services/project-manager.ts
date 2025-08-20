@@ -17,6 +17,7 @@ export interface Project {
   lastModified: Date;
   sessionCount: number;
   analyzed: boolean;
+  aiAnalysis?: any;
 }
 
 export interface Session {
@@ -28,6 +29,7 @@ export interface Session {
   messageCount: number;
   analyzed: boolean;
   analysisResult?: any;
+  aiAnalysis?: any;
 }
 
 export class ProjectManager {
@@ -35,8 +37,13 @@ export class ProjectManager {
   private projects: Map<string, Project> = new Map();
   private sessions: Map<string, Session[]> = new Map();
   private analysisResults: Map<string, any> = new Map();
+  private aiAnalysisResults: Map<string, any> = new Map();
+  private reportsDir: string;
 
   constructor() {
+    // 리포트 디렉토리 설정
+    this.reportsDir = process.env.REPORTS_DIR || path.join(process.cwd(), 'claude-reports');
+    
     // 환경 변수에서 경로 읽기, 없으면 기본 경로 사용
     const envPath = process.env.CLAUDE_CODE_PROJECTS_PATH;
     console.log('환경 변수 CLAUDE_CODE_PROJECTS_PATH:', envPath);
@@ -103,13 +110,17 @@ export class ProjectManager {
           // JSONL 파일 개수 확인
           const sessionCount = await this.countJSONLFiles(projectPath);
           
+          // AI 분석 여부 확인
+          const aiAnalysis = this.getAIAnalysis(entry.name);
+          
           const project: Project = {
             id: entry.name,
             name: entry.name,
             path: projectPath,
             lastModified: stats.mtime,
             sessionCount,
-            analyzed: this.analysisResults.has(entry.name)
+            analyzed: this.analysisResults.has(entry.name),
+            aiAnalysis: aiAnalysis || undefined
           };
           
           projects.push(project);
@@ -195,6 +206,9 @@ export class ProjectManager {
       // 파일 내용의 첫 줄과 마지막 줄을 읽어 시간 정보 추출
       const { startTime, endTime, messageCount } = await this.extractSessionInfo(file);
       
+      // AI 분석 여부 확인
+      const aiAnalysis = this.getAIAnalysis(projectId, relativePath);
+      
       const session: Session = {
         id: relativePath,
         projectId,
@@ -203,7 +217,8 @@ export class ProjectManager {
         endTime,
         messageCount,
         analyzed: false,
-        analysisResult: null
+        analysisResult: null,
+        aiAnalysis: aiAnalysis || undefined
       };
       
       sessions.push(session);
@@ -360,11 +375,154 @@ export class ProjectManager {
   getAnalysisResult(projectId: string): any {
     return this.analysisResults.get(projectId);
   }
+  
+  // AI 분석 결과 저장
+  storeAIAnalysis(projectId: string, sessionId: string | null, analysis: any): void {
+    const key = sessionId ? `${projectId}:${sessionId}` : projectId;
+    this.aiAnalysisResults.set(key, analysis);
+    
+    // 세션에도 저장
+    if (sessionId) {
+      const sessions = this.sessions.get(projectId) || [];
+      const session = sessions.find(s => s.id === sessionId);
+      if (session) {
+        session.aiAnalysis = analysis;
+      }
+    }
+  }
+  
+  // AI 분석 결과 가져오기 - 항상 파일 시스템에서 최신 상태 확인
+  getAIAnalysis(projectId: string, sessionId?: string): any {
+    const key = sessionId ? `${projectId}:${sessionId}` : projectId;
+    
+    // 항상 파일 시스템을 먼저 확인하여 실시간 반영
+    try {
+      const cleanSessionId = sessionId ? sessionId.replace('.jsonl', '') : undefined;
+      const fileName = cleanSessionId 
+        ? `ai-analysis-${projectId}-${cleanSessionId}.json`
+        : `ai-analysis-${projectId}.json`;
+      const filePath = path.join(this.reportsDir, projectId, fileName);
+      
+      if (fs.existsSync(filePath)) {
+        const content = fs.readFileSync(filePath, 'utf-8');
+        const result = JSON.parse(content);
+        // 메모리 캐시 업데이트
+        this.aiAnalysisResults.set(key, result);
+        return result;
+      } else {
+        // 파일이 없으면 메모리 캐시도 삭제
+        this.aiAnalysisResults.delete(key);
+        
+        // 세션에서도 제거
+        if (sessionId) {
+          const sessions = this.sessions.get(projectId) || [];
+          const session = sessions.find(s => s.id === sessionId);
+          if (session) {
+            delete session.aiAnalysis;
+          }
+        }
+      }
+    } catch (error) {
+      console.log('AI 분석 파일 읽기 실패:', error);
+      // 파일 읽기 실패 시 메모리 캐시 삭제
+      this.aiAnalysisResults.delete(key);
+    }
+    
+    return null;
+  }
 
   // 특정 날짜의 세션들 가져오기
   async getSessionsByDate(projectId: string, date: string): Promise<Session[]> {
     const sessions = await this.getProjectSessions(projectId);
     return sessions.filter(s => s.date === date);
+  }
+  
+  // 프로젝트 정보 가져오기
+  async getProject(projectId: string): Promise<Project | null> {
+    return this.projects.get(projectId) || null;
+  }
+  
+  // 세션 파일 읽기 및 파싱
+  async readSessionFile(sessionPath: string): Promise<any> {
+    try {
+      const content = await fsPromises.readFile(sessionPath, 'utf-8');
+      const lines = content.trim().split('\n').filter(line => line.trim());
+      
+      const messages: any[] = [];
+      let startTime: Date | null = null;
+      let endTime: Date | null = null;
+      let codeBlocks = 0;
+      
+      for (const line of lines) {
+        try {
+          const data = JSON.parse(line);
+          
+          // Claude Code 세션 형식에서 메시지 추출
+          if (data.type === 'user' && data.message) {
+            const messageContent = typeof data.message.content === 'string' 
+              ? data.message.content 
+              : (Array.isArray(data.message.content) 
+                ? data.message.content.map((c: any) => typeof c === 'string' ? c : c.text || '').join(' ')
+                : data.message.text || '');
+            
+            messages.push({
+              role: 'user',
+              content: messageContent,
+              timestamp: data.timestamp
+            });
+            
+            // 코드 블록 카운트
+            const codeMatches = messageContent.match(/```[\w]*\n[\s\S]*?```/g);
+            if (codeMatches) codeBlocks += codeMatches.length;
+            
+            const timestamp = new Date(data.timestamp);
+            if (!startTime || timestamp < startTime) startTime = timestamp;
+            if (!endTime || timestamp > endTime) endTime = timestamp;
+          } else if (data.type === 'assistant' && data.message) {
+            const messageContent = Array.isArray(data.message.content)
+              ? data.message.content.map((c: any) => c.text || '').join(' ')
+              : (data.message.content || data.message.text || '');
+            
+            messages.push({
+              role: 'assistant', 
+              content: messageContent,
+              timestamp: data.timestamp
+            });
+            
+            // 코드 블록 카운트
+            const codeMatches = messageContent.match(/```[\w]*\n[\s\S]*?```/g);
+            if (codeMatches) codeBlocks += codeMatches.length;
+            
+            const timestamp = new Date(data.timestamp);
+            if (!startTime || timestamp < startTime) startTime = timestamp;
+            if (!endTime || timestamp > endTime) endTime = timestamp;
+          }
+        } catch (e) {
+          // JSON 파싱 오류 무시
+        }
+      }
+      
+      return {
+        messages,
+        totalMessages: messages.length,
+        userMessages: messages.filter(m => m.role === 'user').length,
+        assistantMessages: messages.filter(m => m.role === 'assistant').length,
+        totalCodeBlocks: codeBlocks,
+        dateRange: {
+          start: startTime?.toISOString() || 'Unknown',
+          end: endTime?.toISOString() || 'Unknown'
+        }
+      };
+    } catch (error) {
+      console.error('세션 파일 읽기 오류:', error);
+      return {
+        messages: [],
+        totalMessages: 0,
+        userMessages: 0,
+        assistantMessages: 0,
+        dateRange: { start: 'Unknown', end: 'Unknown' }
+      };
+    }
   }
 }
 

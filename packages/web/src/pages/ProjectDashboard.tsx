@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 interface Project {
   id: string;
@@ -7,6 +8,7 @@ interface Project {
   lastModified: string;
   sessionCount: number;
   analyzed: boolean;
+  aiAnalysis?: any;
 }
 
 interface Session {
@@ -18,6 +20,7 @@ interface Session {
   messageCount: number;
   analyzed: boolean;
   analysisResult?: any;
+  aiAnalysis?: any;
 }
 
 interface DateStats {
@@ -28,14 +31,15 @@ interface DateStats {
 }
 
 function ProjectDashboard() {
+  const navigate = useNavigate();
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [dateStats, setDateStats] = useState<DateStats[]>([]);
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [loading, setLoading] = useState(false);
-  const [analyzing, setAnalyzing] = useState<string>('');
   const [error, setError] = useState('');
+  const [aiAnalyzing, setAIAnalyzing] = useState<string>('');
 
   // 프로젝트 목록 로드
   useEffect(() => {
@@ -77,73 +81,61 @@ function ProjectDashboard() {
     }
   };
 
-  // 날짜별 세션 분석
-  const analyzeDate = async (date: string) => {
+
+  // AI 세션 분석
+  const aiAnalyzeSession = async (sessionId: string) => {
     if (!selectedProject) return;
     
-    setAnalyzing(date);
+    setAIAnalyzing(sessionId);
     try {
       const response = await fetch(
-        `/api/projects/${selectedProject.id}/analyze-date/${encodeURIComponent(date)}`,
+        `/api/projects/${selectedProject.id}/sessions/${encodeURIComponent(sessionId)}/ai-analyze`,
         { method: 'POST' }
       );
       const data = await response.json();
       
-      // 세션 목록 새로고침
-      await selectProject(selectedProject);
+      if (data.success && data.aiAnalysis) {
+        // 세션 목록 새로고침하여 분석 상태 업데이트
+        await selectProject(selectedProject);
+        
+        // 리포트 페이지로 이동
+        navigate(`/report/${selectedProject.id}/${sessionId}`);
+      }
       setError('');
     } catch (err) {
-      setError(`${date} 분석 중 오류가 발생했습니다.`);
+      setError('AI 세션 분석 중 오류가 발생했습니다.');
       console.error(err);
     } finally {
-      setAnalyzing('');
+      setAIAnalyzing('');
     }
   };
 
-  // 개별 세션 분석
-  const analyzeSession = async (sessionId: string) => {
+  // AI 프로젝트 분석
+  const aiAnalyzeProject = async () => {
     if (!selectedProject) return;
     
-    setAnalyzing(sessionId);
+    setAIAnalyzing('project');
     try {
       const response = await fetch(
-        `/api/projects/${selectedProject.id}/sessions/${encodeURIComponent(sessionId)}/analyze`,
+        `/api/projects/${selectedProject.id}/ai-analyze`,
         { method: 'POST' }
       );
       const data = await response.json();
       
-      // 세션 목록 새로고침
-      await selectProject(selectedProject);
+      if (data.success && data.aiAnalysis) {
+        // 프로젝트 목록 새로고침하여 분석 상태 업데이트
+        await loadProjects();
+        await selectProject(selectedProject);
+        
+        // 리포트 페이지로 이동
+        navigate(`/report/${selectedProject.id}`);
+      }
       setError('');
     } catch (err) {
-      setError('세션 분석 중 오류가 발생했습니다.');
+      setError('AI 프로젝트 분석 중 오류가 발생했습니다.');
       console.error(err);
     } finally {
-      setAnalyzing('');
-    }
-  };
-
-  // 프로젝트 전체 분석
-  const analyzeProject = async () => {
-    if (!selectedProject) return;
-    
-    setAnalyzing('project');
-    try {
-      const response = await fetch(
-        `/api/projects/${selectedProject.id}/analyze`,
-        { method: 'POST' }
-      );
-      const data = await response.json();
-      
-      // 프로젝트 목록 새로고침
-      await loadProjects();
-      await selectProject(selectedProject);
-      setError('');
-    } catch (err) {
-      setError('프로젝트 분석 중 오류가 발생했습니다.');
-      console.error(err);
-    } finally {
-      setAnalyzing('');
+      setAIAnalyzing('');
     }
   };
 
@@ -188,7 +180,14 @@ function ProjectDashboard() {
                   projects.map(project => (
                     <div
                       key={project.id}
-                      onClick={() => selectProject(project)}
+                      onClick={() => {
+                        if (project.aiAnalysis && selectedProject?.id === project.id) {
+                          // 이미 선택된 프로젝트이고 AI 분석이 있으면 리포트로 이동
+                          navigate(`/report/${project.id}`);
+                        } else {
+                          selectProject(project);
+                        }
+                      }}
                       className={`p-4 cursor-pointer hover:bg-gray-50 ${
                         selectedProject?.id === project.id ? 'bg-blue-50' : ''
                       }`}
@@ -196,8 +195,19 @@ function ProjectDashboard() {
                       <div className="font-medium text-gray-900">{project.name}</div>
                       <div className="text-sm text-gray-600 mt-1">
                         세션: {project.sessionCount}개
-                        {project.analyzed && (
-                          <span className="ml-2 text-green-600">✓ 분석됨</span>
+                        {project.aiAnalysis && (
+                          <>
+                            <span className="ml-2 text-green-600">✓ AI 분석됨</span>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/report/${project.id}`);
+                              }}
+                              className="ml-2 text-purple-600 hover:text-purple-800 text-xs"
+                            >
+                              리포트 보기
+                            </button>
+                          </>
                         )}
                       </div>
                       <div className="text-xs text-gray-500 mt-1">
@@ -225,13 +235,23 @@ function ProjectDashboard() {
                         {selectedProject.path}
                       </p>
                     </div>
-                    <button
-                      onClick={analyzeProject}
-                      disabled={analyzing === 'project'}
-                      className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
-                    >
-                      {analyzing === 'project' ? '분석 중...' : '전체 분석'}
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={aiAnalyzeProject}
+                        disabled={aiAnalyzing === 'project'}
+                        className="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 disabled:opacity-50"
+                      >
+                        {aiAnalyzing === 'project' ? 'AI 분석 중...' : 'AI 분석'}
+                      </button>
+                      {selectedProject.aiAnalysis && (
+                        <button
+                          onClick={() => navigate(`/report/${selectedProject.id}`)}
+                          className="px-4 py-2 bg-purple-100 text-purple-700 rounded hover:bg-purple-200"
+                        >
+                          리포트 보기
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {/* 통계 */}
@@ -244,9 +264,9 @@ function ProjectDashboard() {
                     </div>
                     <div className="text-center">
                       <div className="text-2xl font-bold text-green-600">
-                        {sessions.filter(s => s.analyzed).length}
+                        {sessions.filter(s => s.aiAnalysis).length}
                       </div>
-                      <div className="text-sm text-gray-600">분석 완료</div>
+                      <div className="text-sm text-gray-600">AI 분석 완료</div>
                     </div>
                     <div className="text-center">
                       <div className="text-2xl font-bold text-orange-600">
@@ -288,18 +308,6 @@ function ProjectDashboard() {
                           <span className="text-xs">
                             ({stat.analyzedCount}/{stat.sessionCount})
                           </span>
-                          {stat.analyzedCount < stat.sessionCount && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                analyzeDate(stat.date);
-                              }}
-                              disabled={analyzing === stat.date}
-                              className="ml-1 text-xs bg-white text-blue-500 px-2 py-0.5 rounded hover:bg-gray-100"
-                            >
-                              {analyzing === stat.date ? '분석 중...' : '분석'}
-                            </button>
-                          )}
                         </button>
                       ))}
                     </div>
@@ -314,7 +322,12 @@ function ProjectDashboard() {
                         filteredSessions.map(session => (
                           <div
                             key={session.id}
-                            className="border rounded-lg p-3 hover:bg-gray-50"
+                            className={`border rounded-lg p-3 hover:bg-gray-50 ${session.aiAnalysis ? 'cursor-pointer' : ''}`}
+                            onClick={() => {
+                              if (session.aiAnalysis) {
+                                navigate(`/report/${selectedProject.id}/${session.id}`);
+                              }
+                            }}
                           >
                             <div className="flex justify-between items-start">
                               <div className="flex-1">
@@ -330,15 +343,29 @@ function ProjectDashboard() {
                                 </div>
                               </div>
                               <div className="flex items-center gap-2">
-                                {session.analyzed ? (
-                                  <span className="text-green-600 text-sm">✓ 분석됨</span>
+                                {session.aiAnalysis ? (
+                                  <>
+                                    <span className="text-green-600 text-sm">✓ AI 분석됨</span>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        navigate(`/report/${selectedProject.id}/${session.id}`);
+                                      }}
+                                      className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded hover:bg-purple-200"
+                                    >
+                                      리포트
+                                    </button>
+                                  </>
                                 ) : (
                                   <button
-                                    onClick={() => analyzeSession(session.id)}
-                                    disabled={analyzing === session.id}
-                                    className="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 disabled:opacity-50"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      aiAnalyzeSession(session.id);
+                                    }}
+                                    disabled={aiAnalyzing === session.id}
+                                    className="px-3 py-1 bg-purple-500 text-white text-sm rounded hover:bg-purple-600 disabled:opacity-50"
                                   >
-                                    {analyzing === session.id ? '분석 중...' : '분석'}
+                                    {aiAnalyzing === session.id ? 'AI 분석 중...' : 'AI 분석'}
                                   </button>
                                 )}
                               </div>

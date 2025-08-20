@@ -1,5 +1,7 @@
 import { Router } from 'express';
+import * as path from 'path';
 import { getProjectManager } from '../services/project-manager';
+import { aiAnalyzer } from '../services/ai-analyzer';
 
 const router = Router();
 
@@ -119,17 +121,137 @@ router.get('/projects/:projectId/analysis', async (req, res) => {
     const { projectId } = req.params;
     const projectManager = getProjectManager();
     const result = projectManager.getAnalysisResult(projectId);
+    const aiResult = projectManager.getAIAnalysis(projectId);
     
-    if (!result) {
+    if (!result && !aiResult) {
       return res.status(404).json({ error: '분석 결과가 없습니다.' });
     }
     
     res.json({
       projectId,
-      result
+      result,
+      aiAnalysis: aiResult
     });
   } catch (error: any) {
     console.error('분석 결과 조회 오류:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// AI 분석 결과 조회
+router.get('/projects/:projectId/ai-analysis', async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const { sessionId } = req.query;
+    const projectManager = getProjectManager();
+    const aiResult = projectManager.getAIAnalysis(projectId, sessionId as string | undefined);
+    
+    if (!aiResult) {
+      return res.status(404).json({ error: 'AI 분석 결과가 없습니다.' });
+    }
+    
+    res.json({
+      projectId,
+      sessionId,
+      aiAnalysis: aiResult
+    });
+  } catch (error: any) {
+    console.error('AI 분석 결과 조회 오류:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// AI 분석 실행 (세션)
+router.post('/projects/:projectId/sessions/:sessionId/ai-analyze', async (req, res) => {
+  try {
+    const { projectId, sessionId } = req.params;
+    const projectManager = getProjectManager();
+    
+    // 기존 AI 분석 결과 확인
+    const existingAnalysis = projectManager.getAIAnalysis(projectId, sessionId);
+    if (existingAnalysis && !req.query.force) {
+      return res.json({
+        success: true,
+        projectId,
+        sessionId,
+        aiAnalysis: existingAnalysis,
+        cached: true
+      });
+    }
+    
+    // 실제 세션 파일 경로 생성
+    const project = await projectManager.getProject(projectId);
+    if (!project) {
+      return res.status(404).json({ error: '프로젝트를 찾을 수 없습니다.' });
+    }
+    
+    const sessionPath = path.join(project.path, sessionId);
+    
+    // 세션 파일 데이터 읽기 및 파싱
+    const sessionData = await projectManager.readSessionFile(sessionPath);
+    
+    // AI 분석 실행
+    const aiResult = await aiAnalyzer.analyzeSession(sessionData, projectId, sessionId);
+    
+    // 결과 저장
+    projectManager.storeAIAnalysis(projectId, sessionId, aiResult);
+    
+    res.json({
+      success: true,
+      projectId,
+      sessionId,
+      aiAnalysis: aiResult
+    });
+  } catch (error: any) {
+    console.error('AI 세션 분석 오류:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// AI 분석 실행 (프로젝트 전체)
+router.post('/projects/:projectId/ai-analyze', async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const projectManager = getProjectManager();
+    
+    // 기존 AI 분석 결과 확인
+    const existingAnalysis = projectManager.getAIAnalysis(projectId);
+    if (existingAnalysis && !req.query.force) {
+      return res.json({
+        success: true,
+        projectId,
+        aiAnalysis: existingAnalysis,
+        cached: true
+      });
+    }
+    
+    // 프로젝트 데이터 가져오기
+    const projectData = projectManager.getAnalysisResult(projectId);
+    
+    if (!projectData) {
+      // 프로젝트 분석 먼저 실행
+      const analysisResult = await projectManager.analyzeProject(projectId);
+      if (!analysisResult) {
+        return res.status(404).json({ error: '프로젝트 분석 실패' });
+      }
+    }
+    
+    // AI 분석 실행
+    const aiResult = await aiAnalyzer.analyzeProject(
+      projectData || { projectId },
+      projectId
+    );
+    
+    // 결과 저장
+    projectManager.storeAIAnalysis(projectId, null, aiResult);
+    
+    res.json({
+      success: true,
+      projectId,
+      aiAnalysis: aiResult
+    });
+  } catch (error: any) {
+    console.error('AI 프로젝트 분석 오류:', error);
     res.status(500).json({ error: error.message });
   }
 });

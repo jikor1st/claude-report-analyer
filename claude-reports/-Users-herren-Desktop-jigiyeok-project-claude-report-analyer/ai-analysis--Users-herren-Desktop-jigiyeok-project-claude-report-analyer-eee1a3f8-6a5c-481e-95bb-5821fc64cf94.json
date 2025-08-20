@@ -1,0 +1,29 @@
+{
+  "projectId": "-Users-herren-Desktop-jigiyeok-project-claude-report-analyer",
+  "sessionId": "eee1a3f8-6a5c-481e-95bb-5821fc64cf94.jsonl",
+  "analysis": {
+    "summary": "이 세션에서는 다양한 개발 작업이 진행되었습니다.",
+    "keyInsights": [
+      "코드 구현 및 개선 작업 수행"
+    ],
+    "technicalDetails": [
+      "다양한 기술적 구현"
+    ],
+    "recommendations": [
+      "코드 리뷰 및 테스트 권장"
+    ],
+    "codeChanges": [],
+    "filesModified": [],
+    "technologies": [],
+    "errors": [],
+    "complexity": "medium",
+    "topics": [
+      "개발",
+      "프로그래밍",
+      "구현"
+    ],
+    "sentiment": "neutral"
+  },
+  "analyzedAt": "2025-08-20T06:32:29.190Z",
+  "model": "claude-code-local"
+}
