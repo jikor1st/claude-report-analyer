@@ -1,0 +1,36 @@
+{
+  "version": "1.0",
+  "analyzedAt": "2025-08-20T04:33:22.942Z",
+  "sourcePath": "/Users/herren/.claude/projects/-Users-herren-Desktop-herren-gongbiz-b2c-frontend-2/62135681-ec8d-4aaf-b9f4-1d877dcc4444.jsonl",
+  "filesAnalyzed": 1,
+  "sessions": [
+    {
+      "id": "62135681-ec8d-4aaf-b9f4-1d877dcc4444.jsonl",
+      "sessionCount": 0,
+      "totalMessages": 0,
+      "userMessages": 0,
+      "assistantMessages": 0,
+      "codeBlocks": 0,
+      "topics": [],
+      "dateRange": {
+        "start": null,
+        "end": null
+      }
+    }
+  ],
+  "summary": {
+    "totalSessions": 1,
+    "totalMessages": 0,
+    "totalCodeBlocks": 0,
+    "dateRange": {
+      "start": null,
+      "end": null
+    },
+    "topTopics": []
+  },
+  "metadata": {
+    "analyzerVersion": "0.1.0",
+    "platform": "darwin",
+    "nodeVersion": "v20.9.0"
+  }
+}

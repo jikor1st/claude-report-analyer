@@ -3,6 +3,10 @@ import * as path from 'path';
 import { promises as fsPromises } from 'fs';
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import * as dotenv from 'dotenv';
+
+// 환경 변수 로드
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 const execAsync = promisify(exec);
 
@@ -35,15 +39,18 @@ export class ProjectManager {
   constructor() {
     // 환경 변수에서 경로 읽기, 없으면 기본 경로 사용
     const envPath = process.env.CLAUDE_CODE_PROJECTS_PATH;
-    if (envPath) {
+    console.log('환경 변수 CLAUDE_CODE_PROJECTS_PATH:', envPath);
+    
+    if (envPath && envPath.trim() !== '') {
       // 환경 변수의 ~ 처리
       this.baseDir = envPath.replace(/^~/, process.env.HOME || '');
       console.log(`환경 변수에서 프로젝트 경로 설정: ${this.baseDir}`);
     } else {
       // 기본 Claude Code 경로들 시도
       const possiblePaths = [
+        path.join(process.env.HOME || '', '.claude', 'projects'),
         path.join(process.env.HOME || '', '.config', 'claude-code', 'projects'),
-        path.join(process.env.HOME || '', 'Library', 'Application Support', 'Claude', 'claude-code', 'projects'),
+        path.join(process.env.HOME || '', 'Library', 'Application Support', 'Claude', 'projects'),
         path.join(process.cwd(), 'test-projects')
       ];
       
@@ -361,5 +368,20 @@ export class ProjectManager {
   }
 }
 
-// 싱글톤 인스턴스
-export const projectManager = new ProjectManager();
+// 싱글톤 인스턴스 (지연 생성)
+let _projectManager: ProjectManager | null = null;
+
+export function getProjectManager(): ProjectManager {
+  if (!_projectManager) {
+    _projectManager = new ProjectManager();
+  }
+  return _projectManager;
+}
+
+// 설정 변경 시 인스턴스 재생성
+export function resetProjectManager(): void {
+  _projectManager = null;
+}
+
+// 기존 코드 호환성을 위한 export
+export const projectManager = getProjectManager();

@@ -1,11 +1,12 @@
 import { Router } from 'express';
-import { projectManager } from '../services/project-manager';
+import { getProjectManager } from '../services/project-manager';
 
 const router = Router();
 
 // 모든 프로젝트 목록 조회
 router.get('/projects', async (req, res) => {
   try {
+    const projectManager = getProjectManager();
     const projects = await projectManager.scanProjects();
     res.json({ projects });
   } catch (error: any) {
@@ -18,6 +19,7 @@ router.get('/projects', async (req, res) => {
 router.get('/projects/:projectId/sessions', async (req, res) => {
   try {
     const { projectId } = req.params;
+    const projectManager = getProjectManager();
     const sessions = await projectManager.getProjectSessions(projectId);
     
     // 날짜별로 그룹화
@@ -54,6 +56,7 @@ router.get('/projects/:projectId/sessions', async (req, res) => {
 router.get('/projects/:projectId/sessions/date/:date', async (req, res) => {
   try {
     const { projectId, date } = req.params;
+    const projectManager = getProjectManager();
     const sessions = await projectManager.getSessionsByDate(projectId, date);
     
     res.json({
@@ -73,6 +76,7 @@ router.get('/projects/:projectId/sessions/date/:date', async (req, res) => {
 router.post('/projects/:projectId/sessions/:sessionId/analyze', async (req, res) => {
   try {
     const { projectId, sessionId } = req.params;
+    const projectManager = getProjectManager();
     
     // 분석 실행
     const result = await projectManager.analyzeSession(projectId, sessionId);
@@ -93,6 +97,7 @@ router.post('/projects/:projectId/sessions/:sessionId/analyze', async (req, res)
 router.post('/projects/:projectId/analyze', async (req, res) => {
   try {
     const { projectId } = req.params;
+    const projectManager = getProjectManager();
     
     // 전체 분석 실행
     const result = await projectManager.analyzeProject(projectId);
@@ -112,6 +117,7 @@ router.post('/projects/:projectId/analyze', async (req, res) => {
 router.get('/projects/:projectId/analysis', async (req, res) => {
   try {
     const { projectId } = req.params;
+    const projectManager = getProjectManager();
     const result = projectManager.getAnalysisResult(projectId);
     
     if (!result) {
@@ -132,6 +138,7 @@ router.get('/projects/:projectId/analysis', async (req, res) => {
 router.post('/projects/:projectId/analyze-date/:date', async (req, res) => {
   try {
     const { projectId, date } = req.params;
+    const projectManager = getProjectManager();
     const sessions = await projectManager.getSessionsByDate(projectId, date);
     
     const results = [];

@@ -72,9 +72,13 @@ router.post('/settings', async (req, res) => {
     // 환경 변수 업데이트 (현재 프로세스)
     process.env.CLAUDE_CODE_PROJECTS_PATH = claudeCodeProjectsPath;
     
+    // ProjectManager 인스턴스 재생성하여 즉시 적용
+    const { resetProjectManager } = await import('../services/project-manager');
+    resetProjectManager();
+    
     res.json({
       success: true,
-      message: '설정이 저장되었습니다. 서버를 재시작하면 적용됩니다.',
+      message: '설정이 저장되었습니다.',
       settings: {
         claudeCodeProjectsPath,
         actualPath: expandedPath
@@ -92,17 +96,22 @@ router.get('/settings/suggested-paths', async (req, res) => {
     const home = process.env.HOME || '';
     const suggestedPaths = [
       {
+        path: path.join(home, '.claude', 'projects'),
+        label: 'Claude Code 기본 경로',
+        exists: false
+      },
+      {
         path: path.join(home, '.config', 'claude-code', 'projects'),
-        label: 'Linux/Unix 기본 경로',
+        label: 'Linux/Unix 대체 경로',
         exists: false
       },
       {
-        path: path.join(home, 'Library', 'Application Support', 'Claude', 'claude-code', 'projects'),
-        label: 'macOS 기본 경로',
+        path: path.join(home, 'Library', 'Application Support', 'Claude', 'projects'),
+        label: 'macOS 대체 경로',
         exists: false
       },
       {
-        path: path.join(home, 'Documents', 'claude-code', 'projects'),
+        path: path.join(home, 'Documents', 'claude-projects'),
         label: 'Documents 폴더',
         exists: false
       }
