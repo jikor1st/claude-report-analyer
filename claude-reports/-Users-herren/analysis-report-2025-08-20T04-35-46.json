@@ -1,0 +1,36 @@
+{
+  "version": "1.0",
+  "analyzedAt": "2025-08-20T04:35:46.671Z",
+  "sourcePath": "/Users/herren/.claude/projects/-Users-herren/5df76913-67a5-4553-8593-acf56cae12ae.jsonl",
+  "filesAnalyzed": 1,
+  "sessions": [
+    {
+      "id": "5df76913-67a5-4553-8593-acf56cae12ae.jsonl",
+      "sessionCount": 0,
+      "totalMessages": 0,
+      "userMessages": 0,
+      "assistantMessages": 0,
+      "codeBlocks": 0,
+      "topics": [],
+      "dateRange": {
+        "start": null,
+        "end": null
+      }
+    }
+  ],
+  "summary": {
+    "totalSessions": 1,
+    "totalMessages": 0,
+    "totalCodeBlocks": 0,
+    "dateRange": {
+      "start": null,
+      "end": null
+    },
+    "topTopics": []
+  },
+  "metadata": {
+    "analyzerVersion": "0.1.0",
+    "platform": "darwin",
+    "nodeVersion": "v20.9.0"
+  }
+}
