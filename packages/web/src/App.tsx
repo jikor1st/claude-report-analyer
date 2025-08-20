@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, NavLink } from 'react-router-do
 import Dashboard from './pages/Dashboard';
 import Calendar from './pages/Calendar';
 import Reports from './pages/Reports';
+import ProjectAnalyzer from './pages/ProjectAnalyzer';
 
 function App() {
   return (
@@ -44,6 +45,16 @@ function App() {
                 >
                   리포트
                 </NavLink>
+                <NavLink
+                  to="/analyzer"
+                  className={({ isActive }) =>
+                    isActive
+                      ? 'text-primary-600 border-b-2 border-primary-600 py-4'
+                      : 'text-gray-600 hover:text-gray-900 py-4'
+                  }
+                >
+                  프로젝트 분석
+                </NavLink>
               </nav>
             </div>
           </div>
@@ -54,6 +65,7 @@ function App() {
             <Route path="/" element={<Dashboard />} />
             <Route path="/calendar" element={<Calendar />} />
             <Route path="/reports" element={<Reports />} />
+            <Route path="/analyzer" element={<ProjectAnalyzer />} />
           </Routes>
         </main>
       </div>

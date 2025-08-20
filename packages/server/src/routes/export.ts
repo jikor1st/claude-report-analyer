@@ -2,8 +2,6 @@ import { Router } from 'express';
 import * as fs from 'fs';
 import * as path from 'path';
 import { promises as fsPromises } from 'fs';
-import { ReportGenerator } from '../../../cli/dist/services/report-generator.js';
-import { PDFGenerator } from '../../../cli/dist/services/pdf-generator.js';
 
 const router = Router();
 
@@ -38,36 +36,17 @@ router.post('/export/markdown', async (req, res) => {
   }
 });
 
-// PDF 내보내기
+// PDF 내보내기 (간단한 구현 - 실제로는 클라이언트에서 처리)
 router.post('/export/pdf', async (req, res) => {
   try {
     const report = req.body;
     
-    // 임시 디렉토리 생성
-    const tempDir = path.join(process.cwd(), 'temp');
-    if (!fs.existsSync(tempDir)) {
-      await fsPromises.mkdir(tempDir, { recursive: true });
-    }
-    
-    // Markdown 파일 생성
+    // PDF 생성은 클라이언트에서 처리하도록 Markdown을 반환
     const markdown = generateMarkdown(report);
-    const markdownPath = path.join(tempDir, `report-${Date.now()}.md`);
-    await fsPromises.writeFile(markdownPath, markdown);
     
-    // PDF 생성
-    const pdfGenerator = new PDFGenerator(tempDir);
-    const pdfPath = await pdfGenerator.generatePDFFromMarkdown(markdownPath);
-    
-    // PDF 파일 읽기 및 전송
-    const pdfBuffer = await fsPromises.readFile(pdfPath);
-    
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'attachment; filename="claude-report.pdf"');
-    res.send(pdfBuffer);
-    
-    // 임시 파일 정리
-    await fsPromises.unlink(markdownPath);
-    await fsPromises.unlink(pdfPath);
+    res.setHeader('Content-Type', 'text/markdown');
+    res.setHeader('Content-Disposition', 'attachment; filename="claude-report.md"');
+    res.send(markdown);
   } catch (error) {
     console.error('PDF 내보내기 오류:', error);
     res.status(500).json({ error: 'PDF 내보내기 실패' });

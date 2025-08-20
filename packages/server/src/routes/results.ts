@@ -6,7 +6,7 @@ import { promises as fsPromises } from 'fs';
 export const resultsRouter = Router();
 
 // 분석 결과 디렉토리 (프로젝트 루트 기준)
-const REPORTS_DIR = path.resolve(process.cwd(), '../../claude-reports');
+const REPORTS_DIR = path.resolve(process.cwd(), 'claude-reports');
 
 // 모든 분석 결과 목록 조회
 resultsRouter.get('/', async (req, res, next) => {

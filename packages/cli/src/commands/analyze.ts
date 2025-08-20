@@ -19,8 +19,9 @@ export async function analyzeCommand(targetPath: string, options: AnalyzeOptions
   const spinner = ora(chalk.blue('\ud3f4\ub354\ub97c \uc2a4\uce94\ud558\uace0 \uc788\uc2b5\ub2c8\ub2e4...')).start();
 
   try {
-    // \uacbd\ub85c \ud655\uc778
-    const resolvedPath = path.resolve(targetPath);
+    // \uacbd\ub85c \ud655\uc778 (~ \ucc98\ub9ac)
+    const expandedPath = targetPath.replace(/^~/, process.env.HOME || '');
+    const resolvedPath = path.resolve(expandedPath);
     
     if (!fs.existsSync(resolvedPath)) {
       spinner.fail(chalk.red(`\uacbd\ub85c\ub97c \ucc3e\uc744 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4: ${resolvedPath}`));

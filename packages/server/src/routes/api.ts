@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { resultsRouter } from './results';
 import exportRouter from './export';
+import analyzeRouter from './analyze';
 
 export const router = Router();
 
@@ -9,6 +10,9 @@ router.use('/results', resultsRouter);
 
 // Export 엔드포인트
 router.use('/', exportRouter);
+
+// Analyze 엔드포인트
+router.use('/', analyzeRouter);
 
 // API 루트
 router.get('/', (req, res) => {
