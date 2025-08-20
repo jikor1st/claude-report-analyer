@@ -2,6 +2,7 @@
   "name": "@claude-report-analyzer/cli",
   "version": "0.1.0",
   "description": "CLI for Claude Report Analyzer",
+  "type": "module",
   "main": "dist/index.js",
   "bin": {
     "claude-analyzer": "./dist/index.js"

@@ -2,8 +2,8 @@
 
 import { Command } from 'commander';
 import chalk from 'chalk';
-import { analyzeCommand } from './commands/analyze';
-import { VERSION } from '@claude-report-analyzer/shared';
+import { analyzeCommand } from './commands/analyze.js';
+import { VERSION } from '@claude-report-analyzer/shared/dist/index.js';
 
 const program = new Command();
 

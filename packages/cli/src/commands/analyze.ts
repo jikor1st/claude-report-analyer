@@ -3,8 +3,10 @@ import ora from 'ora';
 import * as fs from 'fs';
 import * as path from 'path';
 import { promises as fsPromises } from 'fs';
-import { JSONLParser } from '../utils/jsonl-parser';
-import { SessionAnalyzer } from '../core/session-analyzer';
+import { JSONLParser } from '../utils/jsonl-parser.js';
+import { SessionAnalyzer } from '../core/session-analyzer.js';
+import { ReportGenerator } from '../services/report-generator.js';
+import { AnalysisResult } from '../core/session-analyzer.js';
 
 interface AnalyzeOptions {
   output: string;
@@ -37,6 +39,7 @@ export async function analyzeCommand(targetPath: string, options: AnalyzeOptions
     // \uac01 \ud30c\uc77c \ubd84\uc11d
     const analyzer = new SessionAnalyzer();
     const parser = new JSONLParser();
+    const analysisResults = new Map<string, AnalysisResult>();
     
     for (const file of jsonlFiles) {
       const fileSpinner = ora(chalk.blue(`\ubd84\uc11d \uc911: ${path.basename(file)}`)).start();
@@ -44,6 +47,7 @@ export async function analyzeCommand(targetPath: string, options: AnalyzeOptions
       try {
         const sessions = await parser.parseFile(file);
         const analysis = await analyzer.analyze(sessions);
+        analysisResults.set(path.basename(file), analysis);
         
         if (options.verbose) {
           console.log(chalk.gray(`\\n${file}:`));
@@ -59,17 +63,21 @@ export async function analyzeCommand(targetPath: string, options: AnalyzeOptions
 
     // \uacb0\uacfc \uc800\uc7a5
     const outputDir = path.resolve(options.output);
-    await fsPromises.mkdir(outputDir, { recursive: true });
+    const reportGenerator = new ReportGenerator(outputDir);
     
-    const reportPath = path.join(outputDir, `report-${Date.now()}.json`);
-    await fsPromises.writeFile(reportPath, JSON.stringify({ 
-      analyzedAt: new Date().toISOString(),
-      filesAnalyzed: jsonlFiles.length,
-      outputPath: outputDir
-    }, null, 2));
+    spinner.text = '분석 결과를 저장하고 있습니다...';
+    const reportPath = await reportGenerator.generateReport(
+      analysisResults,
+      resolvedPath,
+      jsonlFiles.length
+    );
+    
+    // Markdown 요약 생성
+    const markdownPath = await reportGenerator.generateMarkdownSummary(reportPath);
 
     console.log(chalk.green(`\\n\u2713 \ubd84\uc11d \uc644\ub8cc!`));
-    console.log(chalk.gray(`  \uacb0\uacfc\uac00 ${reportPath}\uc5d0 \uc800\uc7a5\ub418\uc5c8\uc2b5\ub2c8\ub2e4.`));
+    console.log(chalk.gray(`  JSON \ub9ac\ud3ec\ud2b8: ${reportPath}`));
+    console.log(chalk.gray(`  Markdown \uc694\uc57d: ${markdownPath}`));
 
   } catch (error) {
     spinner.fail(chalk.red(`\ubd84\uc11d \uc911 \uc624\ub958\uac00 \ubc1c\uc0dd\ud588\uc2b5\ub2c8\ub2e4: ${error}`));

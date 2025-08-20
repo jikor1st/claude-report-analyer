@@ -1,4 +1,4 @@
-import { Session, Message } from '../utils/jsonl-parser';
+import { Session, Message } from '../utils/jsonl-parser.js';
 
 export interface AnalysisResult {
   sessionCount: number;
