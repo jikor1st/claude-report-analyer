@@ -27,26 +27,58 @@ export interface Session {
 }
 
 export class ProjectManager {
-  private baseDir: string;
+  private baseDir: string = '';
   private projects: Map<string, Project> = new Map();
   private sessions: Map<string, Session[]> = new Map();
   private analysisResults: Map<string, any> = new Map();
 
   constructor() {
-    // Claude Code 프로젝트 기본 경로
-    this.baseDir = path.join(process.env.HOME || '', '.config', 'claude-code', 'projects');
+    // 환경 변수에서 경로 읽기, 없으면 기본 경로 사용
+    const envPath = process.env.CLAUDE_CODE_PROJECTS_PATH;
+    if (envPath) {
+      // 환경 변수의 ~ 처리
+      this.baseDir = envPath.replace(/^~/, process.env.HOME || '');
+      console.log(`환경 변수에서 프로젝트 경로 설정: ${this.baseDir}`);
+    } else {
+      // 기본 Claude Code 경로들 시도
+      const possiblePaths = [
+        path.join(process.env.HOME || '', '.config', 'claude-code', 'projects'),
+        path.join(process.env.HOME || '', 'Library', 'Application Support', 'Claude', 'claude-code', 'projects'),
+        path.join(process.cwd(), 'test-projects')
+      ];
+      
+      let foundPath = false;
+      for (const possiblePath of possiblePaths) {
+        if (fs.existsSync(possiblePath)) {
+          this.baseDir = possiblePath;
+          console.log(`프로젝트 경로 발견: ${this.baseDir}`);
+          foundPath = true;
+          break;
+        }
+      }
+      
+      // 아무 경로도 없으면 테스트 경로 사용
+      if (!foundPath) {
+        this.baseDir = path.join(process.cwd(), 'test-projects');
+        console.log(`기본 테스트 경로 사용: ${this.baseDir}`);
+      }
+    }
+    
     this.initialize();
   }
 
   private async initialize() {
-    // 기본 디렉토리 확인
+    // 디렉토리 존재 확인
     if (!fs.existsSync(this.baseDir)) {
-      console.warn(`Claude Code 프로젝트 디렉토리가 없습니다: ${this.baseDir}`);
-      // 테스트용 디렉토리 생성
-      this.baseDir = path.join(process.cwd(), 'test-projects');
-      if (!fs.existsSync(this.baseDir)) {
+      console.warn(`프로젝트 디렉토리가 없습니다. 생성 중: ${this.baseDir}`);
+      try {
         await fsPromises.mkdir(this.baseDir, { recursive: true });
+        console.log(`프로젝트 디렉토리 생성됨: ${this.baseDir}`);
+      } catch (error) {
+        console.error(`프로젝트 디렉토리 생성 실패: ${error}`);
       }
+    } else {
+      console.log(`프로젝트 디렉토리 확인: ${this.baseDir}`);
     }
   }
 

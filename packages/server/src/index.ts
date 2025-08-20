@@ -1,8 +1,13 @@
 import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
+import * as dotenv from 'dotenv';
+import * as path from 'path';
 import { router as apiRouter } from './routes/api';
 import { errorHandler } from './middleware/error-handler';
+
+// 환경 변수 로드
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 const app = express();
 const PORT = process.env.PORT || 3001;

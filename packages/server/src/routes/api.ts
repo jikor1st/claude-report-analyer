@@ -3,8 +3,12 @@ import { resultsRouter } from './results';
 import exportRouter from './export';
 import analyzeRouter from './analyze';
 import projectsRouter from './projects';
+import settingsRouter from './settings';
 
 export const router = Router();
+
+// Settings 엔드포인트
+router.use('/', settingsRouter);
 
 // Projects 엔드포인트 (주요 기능)
 router.use('/', projectsRouter);
