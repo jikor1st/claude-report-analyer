@@ -1,0 +1,31 @@
+{
+  "name": "claude-report-analyzer",
+  "version": "0.1.0",
+  "description": "macOS 개발자를 위한 로컬 CLI 기반 Claude Code 대화 세션 자동 분석 및 한국어 문서 시각화·내보내기 오픈소스 툴",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "dev": "npm run dev --workspaces --if-present",
+    "lint": "npm run lint --workspaces",
+    "test": "npm run test --workspaces --if-present"
+  },
+  "keywords": [
+    "claude",
+    "ai",
+    "analyzer",
+    "cli",
+    "korean",
+    "documentation"
+  ],
+  "author": "herren",
+  "license": "MIT",
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^6.19.0",
+    "@typescript-eslint/parser": "^6.19.0",
+    "eslint": "^8.56.0",
+    "typescript": "^5.3.3"
+  }
+}

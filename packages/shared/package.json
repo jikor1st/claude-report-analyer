@@ -1,0 +1,14 @@
+{
+  "name": "@claude-report-analyzer/shared",
+  "version": "0.1.0",
+  "description": "Shared utilities for Claude Report Analyzer",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "eslint src --ext .ts"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.5"
+  }
+}

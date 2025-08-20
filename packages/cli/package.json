@@ -1,0 +1,22 @@
+{
+  "name": "@claude-report-analyzer/cli",
+  "version": "0.1.0",
+  "description": "CLI for Claude Report Analyzer",
+  "main": "dist/index.js",
+  "bin": {
+    "claude-analyzer": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "eslint src --ext .ts"
+  },
+  "dependencies": {
+    "chalk": "^5.6.0",
+    "commander": "^11.1.0",
+    "ora": "^8.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.5"
+  }
+}

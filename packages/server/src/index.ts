@@ -1,0 +1,1 @@
+console.log('Claude Report Analyzer Server');
